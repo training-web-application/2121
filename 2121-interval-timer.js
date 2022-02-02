@@ -2,8 +2,7 @@
 
 const countdownInputBox = document.getElementById('two121-countdown');
 const repsInputBox = document.getElementById('two121-reps');
-const oneRep6SecondsRadioButton = document.getElementById('two121-one-rep-6-seconds');
-const oneRep8SecondsRadioButton = document.getElementById('two121-one-rep-8-seconds');
+const speedInputBox = document.getElementById('two121-speed');
 const startButton = document.getElementById('two121-start');
 const stopButton = document.getElementById('two121-stop');
 const trainingRecords = document.getElementById('training-records');
@@ -37,11 +36,9 @@ try {
             repsInputBox.value = savedSettingValue.reps;
         }
 
-        // 保存されているExerciseの値を設定
-        if(typeof savedSettingValue.exercise !== 'undefined') {
-            if(oneRep8SecondsRadioButton.value === savedSettingValue.exercise) {
-                oneRep8SecondsRadioButton.checked = true;
-            }
+        // 保存されているSpeedの値を設定
+        if(typeof savedSettingValue.speed !== 'undefined') {
+            speedInputBox.value = savedSettingValue.speed;
         }
 
         // 保存されている[Voice Volume]の値を設定
@@ -73,10 +70,8 @@ const settingDisabledText = () => {
         countdownInputBox.disabled = false;
         // Repsの入力ボックスを有効化する
         repsInputBox.disabled = false;
-        // [1 Rep 6 Seconds (2-1-2-1)]のラジオボタンを有効化する
-        oneRep6SecondsRadioButton.disabled = false;
-        // [1 Rep 8 Seconds (2-1-4-1)]のラジオボタンを有効化する
-        oneRep8SecondsRadioButton.disabled = false;
+        // Speedの入力ボックスを有効化する
+        speedInputBox.disabled = false;
         // Startボタンを有効化する
         startButton.disabled = false;
         // START_BUTTON_ENABLED_TEXTをStartボタンに表示する
@@ -86,8 +81,7 @@ const settingDisabledText = () => {
     } else {
         countdownInputBox.disabled = true;
         repsInputBox.disabled = true;
-        oneRep6SecondsRadioButton.disabled = true;
-        oneRep8SecondsRadioButton.disabled = true;
+        speedInputBox.disabled = true;
         startButton.disabled = true;
         startButton.textContent = START_BUTTON_DISABLED_TEXT;
         stopButton.disabled = false;
@@ -103,34 +97,25 @@ const convertInputValue = element => {
     if(Number.isNaN(convertedInteger)) {
         // 非数（Not A Number）の場合
         const defaultValue = parseInt(element.defaultValue);
-        // ブラウザ上のCountdownの表示を規定値にする
+        // ブラウザ上の表示を規定値にする
         element.value = defaultValue;
         // 戻り値を整数で返す
         return defaultValue;
     } else if(maxValue < convertedInteger) {
-        // 最大値よりも大きい場合、ブラウザ上のCountdownの表示を最大値にする
+        // 最大値よりも大きい場合、ブラウザ上の表示を最大値にする
         element.value = maxValue;
         // 戻り値を整数で返す
         return maxValue;
     } else if(convertedInteger < minValue) {
-        // 最小値よりも小さい場合、ブラウザ上のCountdownの表示を最小値にする
+        // 最小値よりも小さい場合、ブラウザ上の表示を最小値にする
         element.value = minValue;
         // 戻り値を整数で返す
         return minValue;
     } else {
-        // その他の場合、ブラウザ上のCountdownの表示を[変換した整数]にする
+        // その他の場合、ブラウザ上の表示を[変換した整数]にする
         element.value = convertedInteger;
         // 戻り値を整数で返す
         return convertedInteger;
-    }
-};
-
-// 選択されたエクササイズを調べる
-const checkSelectedExercise = () => {
-    if(oneRep6SecondsRadioButton.checked) {
-        return oneRep6SecondsRadioButton.value;
-    } else {
-        return oneRep8SecondsRadioButton.value;
     }
 };
 
@@ -152,7 +137,7 @@ const stopTimer = () => {
     const settingValue = {
         countdown: countdownInputBox.value
         , reps: repsInputBox.value
-        , exercise: checkSelectedExercise()
+        , speed: speedInputBox.value
         , voiceVolume: voiceVolume.value
         , soundEffectVolume: soundEffectVolume.value
     };
@@ -193,10 +178,10 @@ startButton.addEventListener('click', () => {
     const inputCountdownPlus0 = inputCountdown + 1;
     // 入力されたReps
     const inputReps = convertInputValue(repsInputBox);
-    // 選択されたExercise（整数に変換）
-    const selectedExercise = parseInt(checkSelectedExercise());
-    // 総リピート数（[入力されたCountdown + 1] + 入力されたReps * selectedExercise）
-    const totalRepeatCount = inputCountdownPlus0 + inputReps * selectedExercise;
+    // 入力されたSpeed
+    const inputSpeed = convertInputValue(speedInputBox);
+    // 総リピート数（[入力されたCountdown + 1] + 入力されたReps * 入力されたSpeed）
+    const totalRepeatCount = inputCountdownPlus0 + inputReps * inputSpeed;
     // 現在のcountdown
     let currentCountdown = inputCountdown;
     // 現在のリピート数
@@ -241,7 +226,7 @@ startButton.addEventListener('click', () => {
 
     playVoice(COUNTDOWN_START_WORD);
 
-    // カウントダウン開始の発話が完了した時に発火
+    // [COUNTDOWN_START_WORD]の発話が完了した時に発火
     createdVoice.onend = () => {
         // 初回
         // この時点では、まだsetInterval() が実行されておらず、intervalIDは必ず0になるため、
@@ -259,7 +244,7 @@ startButton.addEventListener('click', () => {
         const intervalTimer = () => {
             currentRepeatCount++;
             if(inputCountdown < currentRepeatCount) {
-                const current21x1 = (currentRepeatCount - inputCountdownPlus0) % selectedExercise;
+                const current21x1 = (currentRepeatCount - inputCountdownPlus0) % inputSpeed;
                 if(current21x1 === 0) {
                     if(currentRepeatCount !== totalRepeatCount) {
                         // 音声用の現在のreps（currentRepsを+1する前に発言を再生するため）
@@ -284,7 +269,7 @@ startButton.addEventListener('click', () => {
                         startButton.textContent = current21x1;
                     } else {
                         // current21x1が0の場合、[選択されたExercise]の値をStartボタンに表示する
-                        startButton.textContent = selectedExercise;
+                        startButton.textContent = inputSpeed;
                     }
                 } else {
                     // 現在のcountdownをStartボタンに表示する
